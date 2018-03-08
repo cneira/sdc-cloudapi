@@ -859,13 +859,73 @@ test('networks', TEST_OPTS, function (tt) {
         };
 
         OTHER.post(fmt('/my/fabrics/default/vlans/%d/networks',
-                PARAMS.vlan.vlan_id), params, function (err, req, res, body) {
-            checkNotFound(t, err, req, res, body);
-            t.end();
-        });
+            PARAMS.vlan.vlan_id), params, function (err, req, res, body) {
+                checkNotFound(t, err, req, res, body);
+                t.end();
+            });
     });
-});
 
+    tt.test('update fabric network: nets[0] - valid', function (t) {
+        var params = {
+            name: 'network_0_updated',
+            description: 'network_0_updated',
+            routes: { '172.16.0.0/16': '10.4.1.1'},
+            resolvers: [ '8.8.4.4' ],
+            provision_start_ip: '10.4.1.2',
+            provision_end_ip: '10.4.255.252'
+        };
+        CLIENT.put(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+            PARAMS.vlan.vlan_id, nets[0]), params,
+            function (err, req, res, body) {
+                t.ifErr(err, 'update fabric networks nets[0]');
+
+                t.equal(res.statusCode, 200, 'updated nets[0]');
+                common.checkHeaders(t, res.headers);
+                common.checkReqId(t, res.headers);
+                t.end();
+            });
+    });
+
+    tt.test('update fabric network: nets[0] - invalid', function (t) {
+        var params = {
+            gateway: '10.4.1.2'
+        };
+        CLIENT.put(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+            PARAMS.vlan.vlan_id, nets[0]), params,
+            function (err, req, res, body) {
+                t.ok(err, 'expected error');
+                if (err) {
+                    t.equal(err.message,
+                        'property "gateway": unsupported property',
+                        'error message');
+                    t.equal(res.statusCode, 409, 'statusCode');
+                    t.equal(err.restCode, 'InvalidArgument', 'restCode');
+                }
+                t.end();
+            });
+    });
+
+    tt.test('update fabric network: nets[1] - valid', function (t) {
+        var params = {
+            name: 'network_1_updated',
+            routes: { '172.16.0.0/16': '10.5.1.1'},
+            resolvers: [ '8.8.4.4' ],
+            provision_start_ip: '10.5.1.2',
+            provision_end_ip: '10.5.255.252'
+        };
+        CLIENT.put(fmt('/my/fabrics/default/vlans/%d/networks/%s',
+            PARAMS.vlan.vlan_id, nets[1]), params,
+            function (err, req, res, body) {
+                t.ifErr(err, 'update fabric networks nets[1]');
+
+                t.equal(res.statusCode, 200, 'updated nets[1]');
+                common.checkHeaders(t, res.headers);
+                common.checkReqId(t, res.headers);
+                t.end();
+            });
+    });
+
+});
 
 test('create fabric network: invalid', TEST_OPTS, function (t) {
     var base = {
